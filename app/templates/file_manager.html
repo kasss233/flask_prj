@@ -1,0 +1,52 @@
+{% extends "base.html" %}
+
+{% block content %}
+    <h1>文件管理器</h1>
+
+    <div class="current-path">当前路径: <strong>/{{ current_dir_display }}</strong></div>
+
+    {% if current_dir_normalized != "" %}
+      <a href="{{ url_for('main.manage_files', path=parent_dir) }}" class="parent-link">⬆️ 返回上一级 ({{ parent_dir_display }})</a>
+    {% endif %}
+
+    <h2>目录和文件</h2>
+    <ul>
+      {% for item in items %}
+        {% if item.is_dir %}
+          <li class="dir">
+            <span><span class="item-icon">📁</span><a href="{{ url_for('main.manage_files', path=item.path) }}">{{ item.name }}</a></span>
+            <span class="actions">
+              <a href="{{ url_for('main.delete_item', item_path=item.path) }}" class="delete" onclick="return confirm('确定要删除目录 \\'{{ item.name }}\\' 吗？这将删除其下所有内容！');">删除</a>
+            </span>
+          </li>
+        {% else %}
+          <li class="file">
+            <span><span class="item-icon">📄</span>{{ item.name }}</span>
+            <span class="actions">
+              <a href="{{ url_for('main.download_file_route', file_path=item.path) }}" class="download">下载</a>
+              <a href="{{ url_for('main.delete_item', item_path=item.path) }}" class="delete" onclick="return confirm('确定要删除文件 \\'{{ item.name }}\\' 吗？');">删除</a>
+            </span>
+          </li>
+        {% endif %}
+      {% endfor %}
+      {% if not items %}
+        <li>当前目录为空。</li>
+      {% endif %}
+    </ul>
+
+    <div class="form-group">
+      <h2>上传文件到当前目录</h2>
+      <form method="post" action="{{ url_for('main.upload_file', current_path_segment=current_dir_normalized) }}" enctype="multipart/form-data">
+        <input type="file" name="file" required>
+        <button type="submit">上传</button>
+      </form>
+    </div>
+
+    <div class="form-group">
+      <h2>在当前目录创建新文件夹</h2>
+      <form method="post" action="{{ url_for('main.create_folder_route', current_path_segment=current_dir_normalized) }}">
+        <input type="text" name="folder_name" placeholder="文件夹名称" required pattern="[^\\/:\x22*?<>|]+" title="文件夹名称不能包含 \\ / : * ? &quot; < > | 等字符">
+        <button type="submit">创建</button>
+      </form>
+    </div>
+{% endblock %}
