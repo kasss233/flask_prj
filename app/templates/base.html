@@ -5,45 +5,272 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
   <title>{{ title }} - 文件管理器</title>
   <style>
-    body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; margin: 0; background-color: #f8f9fa; color: #212529; }
-    .navbar { background-color: #343a40; padding: 10px 20px; color: white; display: flex; justify-content: space-between; align-items: center; }
-    .navbar a { color: white; text-decoration: none; margin-left: 15px; }
-    .navbar a:hover { text-decoration: underline; }
-    .container { max-width: 900px; margin: 20px auto; background-color: #ffffff; padding: 25px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
-    h1, h2 { color: #343a40; border-bottom: 1px solid #dee2e6; padding-bottom: 10px; margin-bottom: 20px; }
-    ul { list-style-type: none; padding: 0; }
-    li { margin-bottom: 8px; padding: 12px; background-color: #f1f3f5; border-radius: 5px; display: flex; justify-content: space-between; align-items: center; transition: background-color 0.2s ease-in-out; }
-    li:hover { background-color: #e9ecef; }
-    li.dir { border-left: 4px solid #007bff; }
-    li.file { border-left: 4px solid #28a745; }
-    a { text-decoration: none; color: #007bff; font-weight: 500; }
-    a:hover { text-decoration: underline; color: #0056b3; }
-    .actions a { margin-left: 12px; font-size: 0.9em; }
-    .actions a.delete { color: #dc3545; }
-    .actions a.delete:hover { color: #c82333; }
-    .actions a.download { color: #28a745; }
-    .actions a.download:hover { color: #218838; }
-    .form-group { margin-bottom: 20px; padding: 15px; background-color: #f8f9fa; border-radius: 5px; }
-    label { display: block; margin-bottom: 8px; font-weight: 500; }
-    input[type="text"], input[type="password"], input[type="file"] { width: calc(100% - 24px); padding: 10px; border: 1px solid #ced4da; border-radius: 4px; box-sizing: border-box; margin-bottom: 10px; }
-    input[type="file"] { padding: 7px; }
-    button[type="submit"] { padding: 10px 18px; background-color: #007bff; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 1em; transition: background-color 0.2s ease-in-out; }
-    button[type="submit"]:hover { background-color: #0056b3; }
-    .message { padding: 12px 18px; margin-bottom: 20px; border-radius: 5px; font-size: 0.95em; border: 1px solid transparent; }
-    .message.success { background-color: #d4edda; color: #155724; border-color: #c3e6cb; }
-    .message.error { background-color: #f8d7da; color: #721c24; border-color: #f5c6cb; }
-    .message.info { background-color: #d1ecf1; color: #0c5460; border-color: #bee5eb; }
-    .current-path { margin-bottom: 15px; font-size: 1.1em; color: #495057; background-color: #e9ecef; padding: 10px; border-radius: 5px; }
-    .current-path strong { color: #007bff; }
-    .parent-link { margin-bottom: 20px; display: inline-block; padding: 8px 12px; background-color: #6c757d; color: white; border-radius: 4px; }
-    .parent-link:hover { background-color: #5a6268; color: white; }
-    .item-icon { margin-right: 8px; }
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      margin: 0;
+      background-color: #f0f2f5; /* Slightly softer background */
+      color: #333;
+      line-height: 1.6;
+    }
+    .navbar {
+      background-color: #ffffff; /* Lighter navbar */
+      padding: 12px 25px;
+      color: #333;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.05); /* Softer shadow */
+      border-bottom: 1px solid #e0e0e0;
+    }
+    .navbar a {
+      color: #007bff; /* Standard link color */
+      text-decoration: none;
+      margin-left: 18px;
+      font-weight: 500;
+      transition: color 0.2s ease-in-out;
+    }
+    .navbar a:hover {
+      color: #0056b3;
+      text-decoration: none;
+    }
+    .navbar .brand {
+        font-weight: bold;
+        font-size: 1.3em;
+        color: #343a40;
+    }
+    .navbar .user-info span {
+        margin-right: 10px;
+        color: #555;
+    }
+    .container {
+      max-width: 960px; /* Slightly wider */
+      margin: 30px auto;
+      background-color: #ffffff;
+      padding: 30px;
+      border-radius: 10px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.08); /* More pronounced shadow */
+    }
+    h1, h2 {
+      color: #2c3e50; /* Darker, more professional color */
+      border-bottom: 2px solid #e0e0e0; /* Thicker, lighter border */
+      padding-bottom: 12px;
+      margin-top: 0;
+      margin-bottom: 25px;
+    }
+    h1 { font-size: 2em; }
+    h2 { font-size: 1.6em; }
+
+    ul {
+      list-style-type: none;
+      padding: 0;
+    }
+    li {
+      margin-bottom: 10px;
+      padding: 15px 20px; /* Increased padding */
+      background-color: #f8f9fa;
+      border-radius: 6px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      transition: background-color 0.2s ease-in-out, box-shadow 0.2s ease-in-out, transform 0.1s ease-in-out;
+      border-left: 5px solid transparent; /* Base for type indication */
+    }
+    li:hover {
+      background-color: #e9ecef;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.07);
+      transform: translateY(-2px); /* Slight lift effect */
+    }
+    li.dir {
+      border-left-color: #007bff; /* Blue for directories */
+    }
+    li.file {
+      border-left-color: #28a745; /* Green for files */
+    }
+    li .item-name-link { /* Class for the item name link for better targeting */
+        font-weight: 500;
+        color: #343a40;
+    }
+    li .item-name-link:hover {
+        color: #0056b3;
+    }
+
+    a {
+      text-decoration: none;
+      color: #007bff;
+      transition: color 0.2s ease-in-out;
+    }
+    a:hover {
+      text-decoration: none; /* No underline on hover for cleaner look */
+      color: #0056b3;
+    }
+
+    .actions a {
+      margin-left: 10px;
+      font-size: 0.9em;
+      padding: 6px 10px; /* Make them look like small buttons */
+      border-radius: 4px;
+      transition: background-color 0.2s ease-in-out, color 0.2s ease-in-out;
+      border: 1px solid transparent;
+    }
+    .actions a.delete {
+      background-color: transparent;
+      color: #dc3545;
+      border-color: #dc3545;
+    }
+    .actions a.delete:hover {
+      background-color: #dc3545;
+      color: white;
+    }
+    .actions a.download, .actions a.rename /* Added rename style */ {
+      background-color: transparent;
+      color: #28a745;
+      border-color: #28a745;
+    }
+    .actions a.download:hover, .actions a.rename:hover {
+      background-color: #28a745;
+      color: white;
+    }
+
+    .form-group {
+      margin-bottom: 25px;
+      padding: 20px;
+      background-color: #f8f9fa; /* Consistent with li background */
+      border-radius: 6px;
+      border: 1px solid #e9ecef;
+    }
+    label {
+      display: block;
+      margin-bottom: 8px;
+      font-weight: 500;
+      color: #495057;
+    }
+    input[type="text"], input[type="password"], input[type="file"] {
+      width: calc(100% - 22px); /* Account for padding */
+      padding: 10px;
+      border: 1px solid #ced4da;
+      border-radius: 4px;
+      box-sizing: border-box;
+      margin-bottom: 12px;
+      transition: border-color 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+    }
+    input[type="text"]:focus, input[type="password"]:focus, input[type="file"]:focus {
+      border-color: #80bdff;
+      box-shadow: 0 0 0 0.2rem rgba(0,123,255,.25);
+      outline: none;
+    }
+    input[type="file"] {
+      padding: 8px; /* Adjusted padding for file input */
+      background-color: white;
+    }
+    /* Custom file input button text */
+    input[type="file"]::file-selector-button {
+        padding: 8px 15px;
+        margin-right: 10px;
+        background-color: #6c757d;
+        color: white;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+        transition: background-color 0.2s ease-in-out;
+    }
+    input[type="file"]::file-selector-button:hover {
+        background-color: #5a6268;
+    }
+
+    button[type="submit"] {
+      padding: 10px 20px;
+      background-color: #007bff;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 1em;
+      font-weight: 500;
+      transition: background-color 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+    }
+    button[type="submit"]:hover {
+      background-color: #0056b3;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+    button[type="submit"]:active {
+      background-color: #004085;
+    }
+
+    .message {
+      padding: 15px 20px;
+      margin-bottom: 20px;
+      border-radius: 6px;
+      font-size: 0.95em;
+      border: 1px solid transparent;
+      display: flex; /* For icon alignment */
+      align-items: center;
+    }
+    .message::before { /* Pseudo-element for icons */
+        font-family: "Arial", sans-serif; /* Basic font for symbols, consider icon font */
+        margin-right: 10px;
+        font-size: 1.2em;
+    }
+    .message.success {
+      background-color: #d1e7dd; color: #0f5132; border-color: #badbcc;
+    }
+    .message.success::before { content: '✔'; } /* Checkmark for success */
+    .message.error {
+      background-color: #f8d7da; color: #842029; border-color: #f5c2c7;
+    }
+    .message.error::before { content: '✖'; } /* Cross for error */
+    .message.info {
+      background-color: #cff4fc; color: #055160; border-color: #b6effb;
+    }
+    .message.info::before { content: 'ℹ'; } /* Info symbol */
+
+    .current-path {
+      margin-bottom: 20px;
+      font-size: 1.05em;
+      color: #495057;
+      background-color: #e9ecef;
+      padding: 12px 18px;
+      border-radius: 6px;
+      border: 1px solid #dae0e5;
+    }
+    .current-path strong {
+      color: #0056b3; /* Darker blue for emphasis */
+    }
+    .parent-link {
+      margin-bottom: 25px;
+      display: inline-block;
+      padding: 8px 15px;
+      background-color: #6c757d;
+      color: white;
+      border-radius: 4px;
+      font-weight: 500;
+      transition: background-color 0.2s ease-in-out;
+    }
+    .parent-link:hover {
+      background-color: #5a6268;
+      color: white; /* Ensure color remains white on hover */
+    }
+    .item-icon {
+      margin-right: 12px; /* Increased margin */
+      font-size: 1.3em; /* Larger icons */
+    }
+    .item-details { /* Container for name and potentially other info */
+        display: flex;
+        flex-direction: column;
+    }
+    .item-name {
+        font-weight: 500;
+    }
+    .item-meta { /* For future use e.g., size, date */
+        font-size: 0.8em;
+        color: #6c757d;
+    }
+
   </style>
 </head>
 <body>
   <nav class="navbar">
-    <a href="{{ url_for('main.manage_files') }}" style="font-weight: bold; font-size: 1.2em;">文件管理器</a>
-    <div>
+    <a href="{{ url_for('main.manage_files') }}" class="brand">文件管理器</a>
+    <div class="user-info">
       {% if current_user.is_authenticated %}
         <span>你好, {{ current_user.username }}!</span>
         <a href="{{ url_for('auth.logout') }}">登出</a>
