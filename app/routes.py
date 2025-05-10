@@ -79,7 +79,7 @@ def upload_file(current_path_segment):
         return redirect(redirect_url)
 
     if file:
-        filename = secure_filename(file.filename)
+        filename = file.filename
         if not filename:
             flash('无效的文件名。', 'error')
             return redirect(redirect_url)
