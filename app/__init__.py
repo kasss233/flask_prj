@@ -1,6 +1,8 @@
 import os
 from flask import Flask
 from flask_login import LoginManager
+from flask_sqlalchemy import SQLAlchemy
+from flask_migrate import Migrate
 from .config import Config
 
 login_manager = LoginManager()
@@ -8,11 +10,15 @@ login_manager.login_view = 'auth.login' # 指向登录路由的蓝图名称.函�
 login_manager.login_message = "请登录以访问此页面。"
 login_manager.login_message_category = "info"
 
+db = SQLAlchemy()
+migrate = Migrate()
 
 def create_app(config_class=Config):
     app = Flask(__name__)
     app.config.from_object(config_class)
 
+    db.init_app(app)
+    migrate.init_app(app, db)
     login_manager.init_app(app)
 
     # 确保上传文件夹存在
@@ -31,6 +37,7 @@ def create_app(config_class=Config):
     app.register_blueprint(main_bp) # 主蓝图可以没有前缀
 
     # 确保 models 被导入，以便 user_loader 被注册
+    # 并且模型定义能够访问 db 对象
     from . import models 
 
     return app

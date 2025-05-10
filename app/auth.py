@@ -1,26 +1,23 @@
 from flask import Blueprint, render_template, redirect, url_for, request, flash, current_app
 from flask_login import login_user, logout_user, current_user
-from werkzeug.security import check_password_hash # 虽然我们硬编码，但这是正确做法的占位符
-from .models import User, get_user_by_username # 导入 User 类和辅助函数
-from .config import Config # 导入配置以获取用户凭据
+from .models import User
+from . import db
 
 bp = Blueprint('auth', __name__)
 
 @bp.route('/login', methods=['GET', 'POST'])
 def login():
     if current_user.is_authenticated:
-        return redirect(url_for('main.manage_files')) # 'main' 是文件管理蓝图的名称
+        return redirect(url_for('main.manage_files'))
     
     if request.method == 'POST':
         username = request.form.get('username')
         password = request.form.get('password')
         
-        # 演示用：直接比较硬编码的用户名和密码
-        # 在实际应用中，您应该从数据库获取用户并使用 check_password_hash
-        user_obj = get_user_by_username(username)
+        user = User.query.filter_by(username=username).first()
 
-        if user_obj and username == Config.APP_USER and password == Config.APP_PASSWORD:
-            login_user(user_obj, remember=request.form.get('remember_me'))
+        if user and user.check_password(password):
+            login_user(user, remember=request.form.get('remember_me'))
             flash('登录成功！', 'success')
             next_page = request.args.get('next')
             return redirect(next_page or url_for('main.manage_files'))
@@ -28,6 +25,44 @@ def login():
             flash('无效的用户名或密码。', 'error')
             
     return render_template('login.html', title='登录')
+
+@bp.route('/register', methods=['GET', 'POST'])
+def register():
+    if current_user.is_authenticated:
+        return redirect(url_for('main.manage_files'))
+    if request.method == 'POST':
+        username = request.form.get('username')
+        password = request.form.get('password')
+        password2 = request.form.get('password2')
+
+        if not username or not password or not password2:
+            flash('所有字段均为必填项。', 'error')
+            return render_template('register.html', title='注册')
+
+        if password != password2:
+            flash('两次输入的密码不一致。', 'error')
+            return render_template('register.html', title='注册')
+
+        existing_user = User.query.filter_by(username=username).first()
+        if existing_user:
+            flash('该用户名已被注册，请选择其他用户名。', 'error')
+            return render_template('register.html', title='注册')
+
+        new_user = User(username=username)
+        new_user.set_password(password)
+        db.session.add(new_user)
+        try:
+            db.session.commit()
+            flash('恭喜，您已成功注册！现在可以登录了。', 'success')
+            login_user(new_user)
+            return redirect(url_for('main.manage_files'))
+        except Exception as e:
+            db.session.rollback()
+            flash(f'注册过程中发生错误: {e}', 'error')
+            current_app.logger.error(f"Error during registration: {e}")
+
+
+    return render_template('register.html', title='注册')
 
 @bp.route('/logout')
 def logout():

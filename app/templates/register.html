@@ -1,0 +1,22 @@
+{% extends "base.html" %}
+
+{% block content %}
+  <h1>注册新账户</h1>
+  <form method="POST" action="{{ url_for('auth.register') }}">
+    {# {{ form.hidden_tag() if form and form.hidden_tag }} <!-- 如果使用 Flask-WTF --> #}
+    <div class="form-group">
+      <label for="username">用户名</label>
+      <input type="text" id="username" name="username" required>
+    </div>
+    <div class="form-group">
+      <label for="password">密码</label>
+      <input type="password" id="password" name="password" required>
+    </div>
+    <div class="form-group">
+      <label for="password2">确认密码</label>
+      <input type="password" id="password2" name="password2" required>
+    </div>
+    <button type="submit">注册</button>
+  </form>
+  <p style="margin-top: 10px;">已有账户？ <a href="{{ url_for('auth.login') }}">点此登录</a></p>
+{% endblock %}
