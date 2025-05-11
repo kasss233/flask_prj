@@ -1,0 +1,15 @@
+
+services:
+  flask-app:
+    build: .
+    ports:
+      - "8085:8085"
+    volumes:
+      # 持久化存储上传的文件
+      - ./managed_files:/app/managed_files
+      # 持久化数据库
+      - ./site.db:/app/site.db
+    environment:
+      - SECRET_KEY=your_production_secret_key_change_me
+      - FLASK_ENV=production
+    restart: always

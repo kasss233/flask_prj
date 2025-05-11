@@ -15,21 +15,21 @@
     <ul>
       {% for item in items %}
         {% if item.is_dir %}
-          <li class="dir">
+          <li class="item dir">
             <span class="item-details">
-              <span class="item-name"><span class="item-icon">📁</span>
-                {# Link to navigate within the shared folder. item.path is relative to shared root #}
-                <a href="{{ url_for('main.access_shared_item', share_token=share_token, sub_path=item.path) }}" class="item-name-link">{{ item.name }}</a>
-              </span>
+              <span class="item-icon">📁</span>
+              {# Link to navigate within the shared folder. item.path is relative to shared root #}
+              <a href="{{ url_for('main.access_shared_item', share_token=share_token, sub_path=item.path) }}" class="item-name-link">{{ item.name }}</a>
             </span>
             <span class="actions">
               {# No actions like delete/rename for shared items by default #}
             </span>
           </li>
         {% else %}
-          <li class="file">
+          <li class="item file">
             <span class="item-details">
-              <span class="item-name"><span class="item-icon">📄</span><span class="item-name-link">{{ item.name }}</span></span>
+              <span class="item-icon">📄</span>
+              <span class="item-name-link">{{ item.name }}</span>
             </span>
             <span class="actions">
               {# Link to download file from shared folder. item.path is relative to shared root #}
@@ -44,6 +44,6 @@
     </ul>
     
     {% if current_user.is_authenticated %}
-    <p style="margin-top: 20px;"><a href="{{ url_for('main.manage_files') }}">返回我的文件管理器</a></p>
+    <p class="back-link"><a href="{{ url_for('main.manage_files') }}" class="button-primary">返回我的文件管理器</a></p>
     {% endif %}
 {% endblock %}

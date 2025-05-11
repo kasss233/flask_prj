@@ -177,12 +177,12 @@
     }
     .actions a.share, button.share, .actions a.view-share {
       background-color: transparent;
-      color: var(--warning-color);
-      border-color: var(--warning-color);
+      color: var(--danger-color); /* 改为删除按钮的颜色 */
+      border-color: var(--danger-color); /* 改为删除按钮的边框颜色 */
     }
     .actions a.share:hover, button.share:hover, .actions a.view-share:hover {
-      background-color: var(--warning-color);
-      color: var(--text-color); /* Dark text on yellow hover */
+      background-color: var(--danger-color); /* 改为删除按钮的背景颜色 */
+      color: white; /* 保持白色文字 */
     }
      .actions a.view-share { /* Specific if needed, but can inherit from share */
       color: var(--info-color);
@@ -314,6 +314,23 @@
     .parent-link:hover {
       background-color: var(--secondary-color-darker);
       color: white;
+    }
+
+    /* 新增: 认证页面中的替代操作链接（如"已有账户？"） */
+    .auth-alt-action {
+      margin-top: 1.5rem;
+      font-size: 0.95em;
+      text-align: center;
+      color: var(--text-muted);
+    }
+    .auth-alt-action a {
+      font-weight: 500;
+    }
+
+    /* 新增: 返回链接样式 */
+    .back-link {
+      margin-top: 2rem;
+      text-align: center;
     }
 
     /* Styles for my_shares.html items */
