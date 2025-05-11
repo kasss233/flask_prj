@@ -5,265 +5,350 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
   <title>{{ title }} - 文件管理器</title>
   <style>
+    :root {
+      --primary-color: #007bff;
+      --primary-color-darker: #0056b3;
+      --secondary-color: #6c757d;
+      --secondary-color-darker: #5a6268;
+      --success-color: #28a745;
+      --success-color-darker: #1e7e34;
+      --danger-color: #dc3545;
+      --danger-color-darker: #c82333;
+      --warning-color: #ffc107;
+      --warning-color-darker: #e0a800;
+      --info-color: #17a2b8;
+      --info-color-darker: #117a8b;
+      --light-gray: #f8f9fa;
+      --medium-gray: #e9ecef;
+      --dark-gray: #ced4da;
+      --text-color: #343a40;
+      --text-muted: #6c757d;
+      --border-radius: 0.3rem;
+      --box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+      --box-shadow-lg: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+    }
+
     body {
-      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
       margin: 0;
-      background-color: #f0f2f5; /* Slightly softer background */
-      color: #333;
+      background-color: #f4f6f9; /* Softer background */
+      color: var(--text-color);
       line-height: 1.6;
     }
     .navbar {
-      background-color: #ffffff; /* Lighter navbar */
-      padding: 12px 25px;
-      color: #333;
+      background-color: #ffffff;
+      padding: 0.75rem 1.5rem;
+      color: var(--text-color);
       display: flex;
       justify-content: space-between;
       align-items: center;
-      box-shadow: 0 2px 4px rgba(0,0,0,0.05); /* Softer shadow */
-      border-bottom: 1px solid #e0e0e0;
+      box-shadow: var(--box-shadow);
+      border-bottom: 1px solid var(--medium-gray);
     }
     .navbar a {
-      color: #007bff; /* Standard link color */
+      color: var(--primary-color);
       text-decoration: none;
-      margin-left: 18px;
+      margin-left: 1rem;
       font-weight: 500;
       transition: color 0.2s ease-in-out;
     }
     .navbar a:hover {
-      color: #0056b3;
-      text-decoration: none;
+      color: var(--primary-color-darker);
     }
     .navbar .brand {
         font-weight: bold;
-        font-size: 1.3em;
-        color: #343a40;
+        font-size: 1.4em;
+        color: var(--text-color);
+        margin-left: 0;
     }
     .navbar .user-info span {
-        margin-right: 10px;
-        color: #555;
+        margin-right: 0.75rem;
+        color: var(--text-muted);
     }
     .container {
-      max-width: 960px; /* Slightly wider */
-      margin: 30px auto;
+      max-width: 1024px; /* Wider for better content display */
+      margin: 2rem auto;
       background-color: #ffffff;
-      padding: 30px;
-      border-radius: 10px;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.08); /* More pronounced shadow */
+      padding: 2rem;
+      border-radius: var(--border-radius);
+      box-shadow: var(--box-shadow-lg);
     }
     h1, h2 {
-      color: #2c3e50; /* Darker, more professional color */
-      border-bottom: 2px solid #e0e0e0; /* Thicker, lighter border */
-      padding-bottom: 12px;
+      color: var(--text-color);
+      border-bottom: 1px solid var(--medium-gray);
+      padding-bottom: 0.75rem;
       margin-top: 0;
-      margin-bottom: 25px;
+      margin-bottom: 1.5rem;
     }
-    h1 { font-size: 2em; }
-    h2 { font-size: 1.6em; }
+    h1 { font-size: 2.25em; font-weight: 500; }
+    h2 { font-size: 1.75em; font-weight: 500; }
 
     ul {
       list-style-type: none;
       padding: 0;
     }
-    li {
-      margin-bottom: 10px;
-      padding: 15px 20px; /* Increased padding */
-      background-color: #f8f9fa;
-      border-radius: 6px;
+    /* General list item styling for file/folder and share lists */
+    li.item, li.share-item {
+      margin-bottom: 0.75rem;
+      padding: 1rem 1.25rem;
+      background-color: var(--light-gray);
+      border-radius: var(--border-radius);
       display: flex;
       justify-content: space-between;
       align-items: center;
-      transition: background-color 0.2s ease-in-out, box-shadow 0.2s ease-in-out, transform 0.1s ease-in-out;
-      border-left: 5px solid transparent; /* Base for type indication */
+      transition: background-color 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+      border: 1px solid var(--medium-gray);
     }
-    li:hover {
-      background-color: #e9ecef;
-      box-shadow: 0 2px 5px rgba(0,0,0,0.07);
-      transform: translateY(-2px); /* Slight lift effect */
+    li.item:hover, li.share-item:hover {
+      background-color: var(--medium-gray);
+      box-shadow: var(--box-shadow);
     }
-    li.dir {
-      border-left-color: #007bff; /* Blue for directories */
+    /* Specific for file/folder list items */
+    li.item.dir {
+      border-left: 5px solid var(--primary-color);
     }
-    li.file {
-      border-left-color: #28a745; /* Green for files */
+    li.item.file {
+      border-left: 5px solid var(--success-color);
     }
-    li .item-name-link { /* Class for the item name link for better targeting */
+    .item-details { /* Container for name and potentially other info */
+        display: flex;
+        align-items: center; /* Align icon with text */
+        flex-grow: 1;
+    }
+    .item-name-link, .item-name span { /* Class for the item name link for better targeting */
         font-weight: 500;
-        color: #343a40;
+        color: var(--text-color);
+        text-decoration: none;
     }
-    li .item-name-link:hover {
-        color: #0056b3;
+    .item-name-link:hover {
+        color: var(--primary-color-darker);
     }
+    .item-icon {
+      margin-right: 0.75rem;
+      font-size: 1.5em; /* Larger icons */
+      color: var(--secondary-color);
+    }
+    li.item.dir .item-icon { color: var(--primary-color); }
+    li.item.file .item-icon { color: var(--success-color); }
+
 
     a {
       text-decoration: none;
-      color: #007bff;
+      color: var(--primary-color);
       transition: color 0.2s ease-in-out;
     }
     a:hover {
-      text-decoration: none; /* No underline on hover for cleaner look */
-      color: #0056b3;
+      text-decoration: none;
+      color: var(--primary-color-darker);
     }
 
-    .actions a {
-      margin-left: 10px;
+    .actions {
+      display: flex;
+      align-items: center;
+    }
+    .actions a, .actions button {
+      margin-left: 0.75rem;
       font-size: 0.9em;
-      padding: 6px 10px; /* Make them look like small buttons */
-      border-radius: 4px;
-      transition: background-color 0.2s ease-in-out, color 0.2s ease-in-out;
+      padding: 0.4rem 0.8rem;
+      border-radius: var(--border-radius);
+      transition: background-color 0.2s ease-in-out, color 0.2s ease-in-out, border-color 0.2s ease-in-out;
       border: 1px solid transparent;
+      text-decoration: none;
+      cursor: pointer;
+      line-height: 1.5; /* Ensure text is vertically centered */
     }
-    .actions a.delete {
+    .actions a.delete, .actions button.delete {
       background-color: transparent;
-      color: #dc3545;
-      border-color: #dc3545;
+      color: var(--danger-color);
+      border-color: var(--danger-color);
     }
-    .actions a.delete:hover {
-      background-color: #dc3545;
+    .actions a.delete:hover, .actions button.delete:hover {
+      background-color: var(--danger-color);
       color: white;
     }
-    .actions a.download, .actions a.rename /* Added rename style */ {
+    .actions a.download, .actions a.rename {
       background-color: transparent;
-      color: #28a745;
-      border-color: #28a745;
+      color: var(--success-color);
+      border-color: var(--success-color);
     }
     .actions a.download:hover, .actions a.rename:hover {
-      background-color: #28a745;
+      background-color: var(--success-color);
+      color: white;
+    }
+    .actions a.share, button.share, .actions a.view-share {
+      background-color: transparent;
+      color: var(--warning-color);
+      border-color: var(--warning-color);
+    }
+    .actions a.share:hover, button.share:hover, .actions a.view-share:hover {
+      background-color: var(--warning-color);
+      color: var(--text-color); /* Dark text on yellow hover */
+    }
+     .actions a.view-share { /* Specific if needed, but can inherit from share */
+      color: var(--info-color);
+      border-color: var(--info-color);
+    }
+    .actions a.view-share:hover {
+      background-color: var(--info-color);
       color: white;
     }
 
+
     .form-group {
-      margin-bottom: 25px;
-      padding: 20px;
-      background-color: #f8f9fa; /* Consistent with li background */
-      border-radius: 6px;
-      border: 1px solid #e9ecef;
+      margin-bottom: 1.5rem;
+      padding: 1.25rem;
+      background-color: var(--light-gray);
+      border-radius: var(--border-radius);
+      border: 1px solid var(--medium-gray);
     }
     label {
       display: block;
-      margin-bottom: 8px;
+      margin-bottom: 0.5rem;
       font-weight: 500;
-      color: #495057;
+      color: var(--text-color);
     }
     input[type="text"], input[type="password"], input[type="file"] {
-      width: calc(100% - 22px); /* Account for padding */
-      padding: 10px;
-      border: 1px solid #ced4da;
-      border-radius: 4px;
+      width: 100%;
+      padding: 0.65rem 0.75rem;
+      border: 1px solid var(--dark-gray);
+      border-radius: var(--border-radius);
       box-sizing: border-box;
-      margin-bottom: 12px;
+      margin-bottom: 0.75rem;
       transition: border-color 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+      font-size: 1em;
     }
     input[type="text"]:focus, input[type="password"]:focus, input[type="file"]:focus {
-      border-color: #80bdff;
+      border-color: var(--primary-color);
       box-shadow: 0 0 0 0.2rem rgba(0,123,255,.25);
       outline: none;
     }
     input[type="file"] {
-      padding: 8px; /* Adjusted padding for file input */
+      padding: 0.5rem; /* Adjusted padding for file input */
       background-color: white;
     }
-    /* Custom file input button text */
     input[type="file"]::file-selector-button {
-        padding: 8px 15px;
-        margin-right: 10px;
-        background-color: #6c757d;
+        padding: 0.65rem 1rem;
+        margin-right: 0.75rem;
+        background-color: var(--secondary-color);
         color: white;
         border: none;
-        border-radius: 4px;
+        border-radius: var(--border-radius);
         cursor: pointer;
         transition: background-color 0.2s ease-in-out;
     }
     input[type="file"]::file-selector-button:hover {
-        background-color: #5a6268;
+        background-color: var(--secondary-color-darker);
     }
 
-    button[type="submit"] {
-      padding: 10px 20px;
-      background-color: #007bff;
+    button[type="submit"], .button-primary {
+      padding: 0.65rem 1.25rem;
+      background-color: var(--primary-color);
       color: white;
       border: none;
-      border-radius: 4px;
+      border-radius: var(--border-radius);
       cursor: pointer;
       font-size: 1em;
       font-weight: 500;
       transition: background-color 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+      text-decoration: none; /* For .button-primary if used as <a> */
+      display: inline-block; /* For <a> */
     }
-    button[type="submit"]:hover {
-      background-color: #0056b3;
-      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    button[type="submit"]:hover, .button-primary:hover {
+      background-color: var(--primary-color-darker);
+      box-shadow: var(--box-shadow);
     }
-    button[type="submit"]:active {
-      background-color: #004085;
+    button[type="submit"]:active, .button-primary:active {
+      background-color: var(--primary-color-darker); /* Keep it dark on active */
     }
 
     .message {
-      padding: 15px 20px;
-      margin-bottom: 20px;
-      border-radius: 6px;
+      padding: 1rem 1.25rem;
+      margin-bottom: 1.25rem;
+      border-radius: var(--border-radius);
       font-size: 0.95em;
       border: 1px solid transparent;
-      display: flex; /* For icon alignment */
+      display: flex;
       align-items: center;
     }
     .message::before { /* Pseudo-element for icons */
         font-family: "Arial", sans-serif; /* Basic font for symbols, consider icon font */
-        margin-right: 10px;
+        margin-right: 0.75rem;
         font-size: 1.2em;
+        font-weight: bold;
     }
     .message.success {
-      background-color: #d1e7dd; color: #0f5132; border-color: #badbcc;
+      background-color: #d4edda; color: #155724; border-color: #c3e6cb;
     }
-    .message.success::before { content: '✔'; } /* Checkmark for success */
+    .message.success::before { content: '✔'; }
     .message.error {
-      background-color: #f8d7da; color: #842029; border-color: #f5c2c7;
+      background-color: #f8d7da; color: #721c24; border-color: #f5c6cb;
     }
-    .message.error::before { content: '✖'; } /* Cross for error */
+    .message.error::before { content: '✖'; }
     .message.info {
-      background-color: #cff4fc; color: #055160; border-color: #b6effb;
+      background-color: #d1ecf1; color: #0c5460; border-color: #bee5eb;
     }
-    .message.info::before { content: 'ℹ'; } /* Info symbol */
+    .message.info::before { content: 'ℹ'; }
 
     .current-path {
-      margin-bottom: 20px;
+      margin-bottom: 1.25rem;
       font-size: 1.05em;
-      color: #495057;
-      background-color: #e9ecef;
-      padding: 12px 18px;
-      border-radius: 6px;
-      border: 1px solid #dae0e5;
+      color: var(--text-muted);
+      background-color: var(--medium-gray);
+      padding: 0.75rem 1rem;
+      border-radius: var(--border-radius);
+      border: 1px solid var(--dark-gray);
     }
     .current-path strong {
-      color: #0056b3; /* Darker blue for emphasis */
+      color: var(--primary-color-darker);
     }
     .parent-link {
-      margin-bottom: 25px;
+      margin-bottom: 1.5rem;
       display: inline-block;
-      padding: 8px 15px;
-      background-color: #6c757d;
+      padding: 0.5rem 1rem;
+      background-color: var(--secondary-color);
       color: white;
-      border-radius: 4px;
+      border-radius: var(--border-radius);
       font-weight: 500;
       transition: background-color 0.2s ease-in-out;
     }
     .parent-link:hover {
-      background-color: #5a6268;
-      color: white; /* Ensure color remains white on hover */
+      background-color: var(--secondary-color-darker);
+      color: white;
     }
-    .item-icon {
-      margin-right: 12px; /* Increased margin */
-      font-size: 1.3em; /* Larger icons */
+
+    /* Styles for my_shares.html items */
+    .shares-list { /* This class is on the <ul> in my_shares.html */
+        /* ul already has list-style-type: none; padding: 0; */
     }
-    .item-details { /* Container for name and potentially other info */
-        display: flex;
+    /* li.share-item already styled by general li.item or li.share-item */
+    .share-item .item-details { /* Overriding flex-direction for share items if needed, or use specific classes */
         flex-direction: column;
+        align-items: flex-start; /* Align text to the start */
     }
-    .item-name {
+    .share-item .item-name { /* This class is on a span inside item-details */
+        font-weight: 500;
+        margin-bottom: 0.3rem;
+        display: block; /* Ensure it takes full width if needed */
+        font-size: 1.1em;
+    }
+    .share-item .item-name .item-icon { /* Icon within share item name */
+        font-size: 1em; /* Adjust if it's too big from general .item-icon */
+        margin-right: 0.5rem;
+    }
+    .share-item .item-meta, .share-item .share-link {
+        font-size: 0.9em;
+        color: var(--text-muted);
+        margin-bottom: 0.2rem;
+        display: block;
+    }
+    .share-item .share-link a {
+        color: var(--primary-color);
         font-weight: 500;
     }
-    .item-meta { /* For future use e.g., size, date */
-        font-size: 0.8em;
-        color: #6c757d;
+    .share-item .share-link a:hover {
+        color: var(--primary-color-darker);
     }
+    /* Actions for share items are already covered by .actions a, .actions button */
 
   </style>
 </head>
@@ -273,6 +358,7 @@
     <div class="user-info">
       {% if current_user.is_authenticated %}
         <span>你好, {{ current_user.username }}!</span>
+        <a href="{{ url_for('main.my_shares') }}">我的分享</a>
         <a href="{{ url_for('auth.logout') }}">登出</a>
       {% else %}
         <a href="{{ url_for('auth.login') }}">登录</a>

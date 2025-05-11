@@ -4,6 +4,8 @@ from flask import Blueprint, request, redirect, url_for, render_template, send_f
 from flask_login import login_required, current_user
 from werkzeug.utils import secure_filename
 from .utils import get_safe_absolute_path, get_user_base_upload_path # 从 utils.py 导入
+from .models import Share, User # 导入 Share 和 User 模型
+from . import db # 导入 db 实例
 
 bp = Blueprint('main', __name__)
 
@@ -206,4 +208,193 @@ def download_file_route(file_path):
     except Exception as e:
         flash(f"下载文件时出错: {e}", "error")
         return redirect(url_for('main.manage_files', path=parent_dir_of_item))
+
+@bp.route('/share_item/<path:item_path>', methods=['POST'])
+@login_required
+def create_share_link(item_path):
+    item_path_normalized = item_path.strip('/\\')
+    redirect_path = os.path.dirname(item_path_normalized).replace(os.sep, '/')
+    redirect_url = url_for('main.manage_files', path=redirect_path)
+
+    try:
+        # 确认项目存在且属于当前用户
+        abs_item_path = get_safe_absolute_path(item_path_normalized) # uses current_user.id by default
+        
+        if not os.path.exists(abs_item_path):
+            flash("要分享的项目不存在。", "error")
+            return redirect(redirect_url)
+
+        is_file = os.path.isfile(abs_item_path)
+        
+        # 检查是否已为此项目创建过分享链接 (可选，或允许重复分享)
+        existing_share = Share.query.filter_by(user_id=current_user.id, item_path=item_path_normalized).first()
+        if existing_share:
+            share_url = url_for('main.access_shared_item', share_token=existing_share.share_token, _external=True)
+            flash(f"此项目已分享。分享链接: {share_url}", "info")
+            return redirect(redirect_url)
+
+        token = Share.generate_token()
+        new_share = Share(
+            user_id=current_user.id,
+            item_path=item_path_normalized,
+            share_token=token,
+            is_file=is_file
+        )
+        db.session.add(new_share)
+        db.session.commit()
+
+        share_url = url_for('main.access_shared_item', share_token=token, _external=True)
+        flash(f"分享链接已创建: {share_url}", "success")
+        # Consider using a clipboard copy functionality on the frontend
+        current_app.logger.info(f"User {current_user.id} shared item {item_path_normalized} with token {token}")
+
+    except ValueError as e: # From get_safe_absolute_path
+        flash(str(e), "error")
+    except Exception as e:
+        db.session.rollback()
+        flash(f"创建分享链接时出错: {e}", "error")
+        current_app.logger.error(f"Error creating share link for {item_path} by user {current_user.id}: {e}")
+        
+    return redirect(redirect_url)
+
+@bp.route('/shared/<share_token>')
+@bp.route('/shared/<share_token>/<path:sub_path>')
+def access_shared_item(share_token, sub_path=""):
+    share_record = Share.query.filter_by(share_token=share_token).first()
+
+    if not share_record:
+        flash("分享链接无效或已过期。", "error")
+        return redirect(url_for('main.manage_files' if current_user.is_authenticated else 'auth.login'))
+
+    owner_id = share_record.user_id
+    # item_path_in_share is the root of the share, relative to owner's space
+    item_path_in_share = share_record.item_path 
+    
+    # current_relative_path is sub_path within the shared item_path_in_share
+    current_relative_path_within_share = sub_path.strip('/\\')
+
+    # full_relative_path_to_owner_root is the path from the owner's root
+    full_relative_path_to_owner_root = os.path.join(item_path_in_share, current_relative_path_within_share).replace(os.sep, '/')
+    
+    try:
+        # Get owner's base upload directory
+        owner_base_dir = get_user_base_upload_path(user_id_to_use=owner_id)
+        # Get the absolute path of the item to be accessed (file or directory)
+        # This uses the full path relative to the owner's root.
+        abs_item_path = get_safe_absolute_path(full_relative_path_to_owner_root, user_id_to_use=owner_id)
+
+        if not os.path.exists(abs_item_path):
+            flash("分享的项目中的指定路径不存在。", "error")
+            return redirect(url_for('main.manage_files' if current_user.is_authenticated else 'auth.login'))
+
+        # If the original share was a file, sub_path should typically be empty or not used for navigation
+        if share_record.is_file:
+            if sub_path: # Trying to access a sub_path of a shared file doesn't make sense
+                flash("无效的分享访问。", "error")
+                return redirect(url_for('main.manage_files' if current_user.is_authenticated else 'auth.login'))
+            # Send the file for download
+            # send_from_directory needs path relative to its first argument (owner_base_dir)
+            return send_from_directory(owner_base_dir, item_path_in_share, as_attachment=True)
+        
+        # If it's a shared directory
+        else:
+            # If a download is requested for a file within the shared directory
+            if request.args.get('download') == 'true' and os.path.isfile(abs_item_path):
+                # full_relative_path_to_owner_root is already the correct path relative to owner_base_dir
+                return send_from_directory(owner_base_dir, full_relative_path_to_owner_root, as_attachment=True)
+            elif not os.path.isdir(abs_item_path): # Trying to "view" a file as a directory
+                flash("分享的项目中的指定路径不是一个目录。", "error")
+                return redirect(url_for('main.access_shared_item', share_token=share_token))
+
+
+            # List directory contents
+            items_list = []
+            for item_name_in_dir in os.listdir(abs_item_path):
+                # item_sub_path_in_share is the path of this item relative to the *root of the share*
+                item_sub_path_in_share = os.path.join(current_relative_path_within_share, item_name_in_dir).replace(os.sep, '/')
+                
+                # full_abs_path_of_item_in_dir is its absolute path on disk
+                full_abs_path_of_item_in_dir = os.path.join(abs_item_path, item_name_in_dir)
+                
+                items_list.append({
+                    'name': item_name_in_dir,
+                    'path': item_sub_path_in_share, # This path is used for links within the shared view
+                    'is_dir': os.path.isdir(full_abs_path_of_item_in_dir)
+                })
+            items_list.sort(key=lambda x: (not x['is_dir'], x['name'].lower()))
+            
+            shared_item_base_name = os.path.basename(item_path_in_share) if item_path_in_share else "根分享"
+            
+            current_display_path_in_share = current_relative_path_within_share if current_relative_path_within_share else shared_item_base_name
+            
+            parent_dir_in_share = None
+            parent_dir_display_in_share = None
+            if current_relative_path_within_share:
+                parent_dir_in_share = os.path.dirname(current_relative_path_within_share).replace(os.sep, '/')
+                if parent_dir_in_share == ".": parent_dir_in_share = "" # Top level of share
+                parent_dir_display_in_share = os.path.basename(parent_dir_in_share) if parent_dir_in_share else shared_item_base_name
+
+            owner = User.query.get(owner_id)
+
+            return render_template('shared_item_view.html',
+                                   items=items_list,
+                                   share_token=share_token,
+                                   shared_item_name=shared_item_base_name, # The name of the originally shared folder/file
+                                   current_dir_normalized=current_relative_path_within_share, # Path relative to shared root
+                                   current_dir_display=current_display_path_in_share,
+                                   parent_dir=parent_dir_in_share,
+                                   parent_dir_display=parent_dir_display_in_share or shared_item_base_name,
+                                   owner_username=owner.username if owner else "未知用户",
+                                   creation_date=share_record.created_at,
+                                   title=f"分享: {shared_item_base_name}")
+
+    except ValueError as e: # From get_safe_absolute_path or get_user_base_upload_path
+        flash(str(e), "error")
+        current_app.logger.error(f"Error accessing shared item {share_token} (sub_path: {sub_path}): {e}")
+        return redirect(url_for('main.manage_files' if current_user.is_authenticated else 'auth.login'))
+    except Exception as e:
+        flash(f"访问分享内容时发生错误: {e}", "error")
+        current_app.logger.error(f"Generic error accessing shared item {share_token} (sub_path: {sub_path}): {e}")
+        return redirect(url_for('main.manage_files' if current_user.is_authenticated else 'auth.login'))
+
+@bp.route('/my_shares')
+@login_required
+def my_shares():
+    user_shares = Share.query.filter_by(user_id=current_user.id).order_by(Share.created_at.desc()).all()
+    shares_data = []
+    for share in user_shares:
+        item_name = os.path.basename(share.item_path) if share.item_path else "根目录项"
+        # Ensure item_name is set, especially if item_path could be empty or just '/'
+        if not item_name and share.item_path == '/': # Or some other logic for root shares
+            item_name = "用户根目录"
+        elif not item_name: # Default for any other unexpected empty basename
+             item_name = "未知项目"
+
+        shares_data.append({
+            'token': share.share_token,
+            'item_name': item_name,
+            'item_path': share.item_path,
+            'is_file': share.is_file,
+            'created_at': share.created_at.strftime('%Y-%m-%d %H:%M:%S'),
+            'url': url_for('main.access_shared_item', share_token=share.share_token, _external=True)
+        })
+    return render_template('my_shares.html', shares=shares_data, title="我的分享")
+
+@bp.route('/delete_share/<share_token>', methods=['POST'])
+@login_required
+def delete_share(share_token):
+    share_to_delete = Share.query.filter_by(share_token=share_token, user_id=current_user.id).first()
+    if share_to_delete:
+        try:
+            db.session.delete(share_to_delete)
+            db.session.commit()
+            flash("分享链接已成功删除。", "success")
+            current_app.logger.info(f"User {current_user.id} deleted share token {share_token}")
+        except Exception as e:
+            db.session.rollback()
+            flash(f"删除分享链接时出错: {e}", "error")
+            current_app.logger.error(f"Error deleting share token {share_token} by user {current_user.id}: {e}")
+    else:
+        flash("未找到要删除的分享链接，或您无权删除它。", "error")
+    return redirect(url_for('main.my_shares'))
 

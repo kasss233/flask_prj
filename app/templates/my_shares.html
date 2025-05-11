@@ -1,0 +1,35 @@
+{% extends "base.html" %}
+
+{% block content %}
+<h1>我的分享</h1>
+
+{% if shares %}
+    <ul class="shares-list">
+        {% for share in shares %}
+        <li class="share-item {% if share.is_file %}file{% else %}dir{% endif %}">
+            <div class="item-details">
+                <span class="item-name">
+                    <span class="item-icon">{% if share.is_file %}📄{% else %}📁{% endif %}</span>
+                    <strong>{{ share.item_name }}</strong> (路径: /{{ share.item_path }})
+                </span>
+                <span class="item-meta">
+                    创建于: {{ share.created_at }}
+                </span>
+                <span class="share-link">
+                    分享链接: <a href="{{ share.url }}" target="_blank">{{ share.url }}</a>
+                </span>
+            </div>
+            <span class="actions">
+                <a href="{{ share.url }}" class="view-share" target="_blank">查看</a>
+                <form action="{{ url_for('main.delete_share', share_token=share.token) }}" method="POST" style="display: inline;" onsubmit="return confirm('确定要删除这个分享链接吗？');">
+                    <button type="submit" class="delete">删除分享</button>
+                </form>
+            </span>
+        </li>
+        {% endfor %}
+    </ul>
+{% else %}
+    <p>您还没有创建任何分享链接。</p>
+{% endif %}
+
+{% endblock %}

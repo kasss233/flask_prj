@@ -1,0 +1,49 @@
+{% extends "base.html" %}
+
+{% block content %}
+    <h1>分享的内容: {{ shared_item_name }}</h1>
+    <p>由用户 <strong>{{ owner_username }}</strong> 分享于 {{ creation_date.strftime('%Y-%m-%d %H:%M:%S') }} UTC</p>
+
+    <div class="current-path">当前路径: <strong>/{{ current_dir_display }}</strong></div>
+
+    {# Parent directory link within the shared context #}
+    {% if current_dir_normalized != "" and parent_dir is not none %}
+      <a href="{{ url_for('main.access_shared_item', share_token=share_token, sub_path=parent_dir) }}" class="parent-link">返回上一级 ({{ parent_dir_display }})</a>
+    {% endif %}
+
+    <h2>目录和文件</h2>
+    <ul>
+      {% for item in items %}
+        {% if item.is_dir %}
+          <li class="dir">
+            <span class="item-details">
+              <span class="item-name"><span class="item-icon">📁</span>
+                {# Link to navigate within the shared folder. item.path is relative to shared root #}
+                <a href="{{ url_for('main.access_shared_item', share_token=share_token, sub_path=item.path) }}" class="item-name-link">{{ item.name }}</a>
+              </span>
+            </span>
+            <span class="actions">
+              {# No actions like delete/rename for shared items by default #}
+            </span>
+          </li>
+        {% else %}
+          <li class="file">
+            <span class="item-details">
+              <span class="item-name"><span class="item-icon">📄</span><span class="item-name-link">{{ item.name }}</span></span>
+            </span>
+            <span class="actions">
+              {# Link to download file from shared folder. item.path is relative to shared root #}
+              <a href="{{ url_for('main.access_shared_item', share_token=share_token, sub_path=item.path, download='true') }}" class="download">下载</a>
+            </span>
+          </li>
+        {% endif %}
+      {% endfor %}
+      {% if not items %}
+        <li>此分享目录为空或无法访问内容。</li>
+      {% endif %}
+    </ul>
+    
+    {% if current_user.is_authenticated %}
+    <p style="margin-top: 20px;"><a href="{{ url_for('main.manage_files') }}">返回我的文件管理器</a></p>
+    {% endif %}
+{% endblock %}
